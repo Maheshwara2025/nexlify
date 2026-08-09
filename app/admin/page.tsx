@@ -154,8 +154,9 @@ export default function AdminPage() {
       category: category.trim() || "General",
     });
     setNewsSaving(false);
-    if (error) setNewsStatus("Error: " + error.message);
-    else {
+    if (error) {
+      setNewsStatus("Error: " + error.message);
+    } else {
       setNewsStatus("✅ News published!");
       setTitle("");
       setContent("");
@@ -209,9 +210,10 @@ export default function AdminPage() {
       category: gCategory.trim() || "General",
     });
     setGSaving(false);
-    if (error) setGStatus("Error: " + error.message);
-    else {
-      setGStatus("✅ Photo saved! /gallery refresh చేయండి");
+    if (error) {
+      setGStatus("Error: " + error.message);
+    } else {
+      setGStatus("✅ Photo saved! /gallery refresh");
       setGTitle("");
       setGDesc("");
       setGCategory("General");
@@ -240,9 +242,15 @@ export default function AdminPage() {
           <p className="text-xs text-slate-400">{email}</p>
         </div>
         <div className="flex gap-4 text-sm">
-          <Link href="/" className="text-slate-300 hover:text-white">View site</Link>
-          <Link href="/gallery" className="text-slate-300 hover:text-white">Gallery</Link>
-          <button onClick={logout} className="text-red-300 hover:text-red-200">Logout</button>
+          <Link href="/" className="text-slate-300 hover:text-white">
+            View site
+          </Link>
+          <Link href="/gallery" className="text-slate-300 hover:text-white">
+            Gallery
+          </Link>
+          <button onClick={logout} className="text-red-300 hover:text-red-200">
+            Logout
+          </button>
         </div>
       </div>
 
@@ -255,15 +263,31 @@ export default function AdminPage() {
             <div className="mb-4 p-3 bg-slate-900 text-white rounded-xl text-sm">
               <span className="bg-red-500 text-[10px] font-black px-1.5 py-0.5 rounded mr-2">LIVE</span>
               {currentFlash}
-              <button onClick={clearFlash} className="block mt-2 text-red-300 text-xs hover:underline">Clear</button>
+              <button onClick={clearFlash} className="block mt-2 text-red-300 text-xs hover:underline">
+                Clear
+              </button>
             </div>
           ) : (
             <p className="text-sm text-slate-400 mb-4">No active flash</p>
           )}
           <div className="space-y-3">
-            <input value={flashMsg} onChange={(e) => setFlashMsg(e.target.value)} placeholder="Message" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={flashLink} onChange={(e) => setFlashLink(e.target.value)} placeholder="Link optional" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <button onClick={saveFlash} disabled={flashSaving} className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">
+            <input
+              value={flashMsg}
+              onChange={(e) => setFlashMsg(e.target.value)}
+              placeholder="Message"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={flashLink}
+              onChange={(e) => setFlashLink(e.target.value)}
+              placeholder="Link optional"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <button
+              onClick={saveFlash}
+              disabled={flashSaving}
+              className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50"
+            >
               {flashSaving ? "Saving..." : "Save Flash"}
             </button>
             {flashStatus && <p className="text-sm text-green-600 text-center">{flashStatus}</p>}
@@ -296,11 +320,16 @@ export default function AdminPage() {
             />
             <div>
               <label className="text-sm font-medium text-slate-700">Photo</label>
-              <input type="file" accept="image/*" onChange={uploadGalleryImage} className="w-full border rounded-xl px-4 py-3 mt-1 text-sm" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={uploadGalleryImage}
+                className="w-full border rounded-xl px-4 py-3 mt-1 text-sm"
+              />
               {gUploading && <p className="text-xs text-orange-600 mt-1">Uploading...</p>}
-              {gImageUrl && (
+              {gImageUrl ? (
                 <img src={gImageUrl} alt="preview" className="h-36 rounded-xl object-cover border mt-2" />
-              )}
+              ) : null}
             </div>
             <button
               onClick={saveGallery}
@@ -318,25 +347,97 @@ export default function AdminPage() {
           <h2 className="text-lg font-bold text-slate-900 mb-1">📰 Publish News</h2>
           <p className="text-sm text-slate-500 mb-4">Headline + sub headlines + image</p>
           <div className="space-y-3">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Headline / Title *" className="w-full border rounded-xl px-4 py-3 text-sm font-medium" />
-            <input value={sub1} onChange={(e) => setSub1(e.target.value)} placeholder="Sub headline 1" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={sub2} onChange={(e) => setSub2(e.target.value)} placeholder="Sub headline 2" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={sub3} onChange={(e) => setSub3(e.target.value)} placeholder="Sub headline 3" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={sub4} onChange={(e) => setSub4(e.target.value)} placeholder="Sub headline 4" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={sub5} onChange={(e) => setSub5(e.target.value)} placeholder="Sub headline 5" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={sub6} onChange={(e) => setSub6(e.target.value)} placeholder="Sub headline 6" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Full content *" rows={5} className="w-full border rounded-xl px-4 py-3 text-sm resize-y" />
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Headline / Title *"
+              className="w-full border rounded-xl px-4 py-3 text-sm font-medium"
+            />
+            <input
+              value={sub1}
+              onChange={(e) => setSub1(e.target.value)}
+              placeholder="Sub headline 1"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={sub2}
+              onChange={(e) => setSub2(e.target.value)}
+              placeholder="Sub headline 2"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={sub3}
+              onChange={(e) => setSub3(e.target.value)}
+              placeholder="Sub headline 3"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={sub4}
+              onChange={(e) => setSub4(e.target.value)}
+              placeholder="Sub headline 4"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={sub5}
+              onChange={(e) => setSub5(e.target.value)}
+              placeholder="Sub headline 5"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={sub6}
+              onChange={(e) => setSub6(e.target.value)}
+              placeholder="Sub headline 6"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Full content *"
+              rows={5}
+              className="w-full border rounded-xl px-4 py-3 text-sm resize-y"
+            />
             <div>
               <label className="text-sm font-medium text-slate-700">News image</label>
-              <input type="file" accept="image/*" onChange={uploadImage} className="w-full border rounded-xl px-4 py-3 mt-1 text-sm" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={uploadImage}
+                className="w-full border rounded-xl px-4 py-3 mt-1 text-sm"
+              />
               {uploading && <p className="text-xs text-orange-600 mt-1">Uploading...</p>}
-              {imageUrl && <img src={imageUrl} alt="" className="h-28 rounded-xl object-cover border mt-2" />}
+              {imageUrl ? (
+                <img src={imageUrl} alt="news" className="h-28 rounded-xl object-cover border mt-2" />
+              ) : null}
             </div>
-            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Or image URL" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube link" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" className="w-full border rounded-xl px-4 py-3 text-sm" />
-            <button onClick={saveNews} disabled={newsSaving || uploading} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">
+            <input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Or image URL"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="YouTube link"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Location"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
+            <button
+              onClick={saveNews}
+              disabled={newsSaving || uploading}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50"
+            >
               {newsSaving ? "Publishing..." : "Publish News"}
             </button>
             {newsStatus && <p className="text-sm text-green-600 text-center">{newsStatus}</p>}
@@ -352,8 +453,12 @@ export default function AdminPage() {
             <ul className="space-y-2">
               {recentNews.map((n) => (
                 <li key={n.id} className="flex justify-between text-sm border-b pb-2">
-                  <Link href={`/news/${n.id}`} className="font-medium hover:text-orange-600 line-clamp-1">{n.title}</Link>
-                  <span className="text-xs text-slate-400 ml-2">{new Date(n.created_at).toLocaleDateString()}</span>
+                  <Link href={`/news/${n.id}`} className="font-medium hover:text-orange-600 line-clamp-1">
+                    {n.title}
+                  </Link>
+                  <span className="text-xs text-slate-400 ml-2">
+                    {new Date(n.created_at).toLocaleDateString()}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -369,7 +474,9 @@ export default function AdminPage() {
             <ul className="space-y-3">
               {contacts.map((c) => (
                 <li key={c.id} className="text-sm border rounded-xl p-3 bg-slate-50">
-                  <p className="font-semibold">{c.name} · {c.phone}</p>
+                  <p className="font-semibold">
+                    {c.name} · {c.phone}
+                  </p>
                   <p className="text-slate-600 mt-1">{c.message}</p>
                 </li>
               ))}
