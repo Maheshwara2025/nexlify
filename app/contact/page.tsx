@@ -131,11 +131,21 @@ export default function ContactPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="font-medium">Nexlify Nucleus</p>
-          <p className="text-gray-400 text-sm mt-1">A unit of A.S.V Enterprises • Mutharam</p>
-        </div>
-      </footer>
+  <div className="max-w-6xl mx-auto px-4 text-center">
+    <p className="font-medium">Nexlify Nucleus</p>
+    <p className="text-gray-400 text-sm mt-1">A unit of A.S.V Enterprises • Mutharam</p>
+    <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm text-gray-400">
+      <Link href="/" className="hover:text-white">Home</Link>
+      <Link href="/tools" className="hover:text-white">Tools</Link>
+      <Link href="/agriculture" className="hover:text-white">Agriculture</Link>
+      <Link href="/business" className="hover:text-white">Business</Link>
+      <Link href="/gallery" className="hover:text-white">Gallery</Link>
+      <Link href="/news" className="hover:text-white">News</Link>
+      <Link href="/contact" className="hover:text-white">Contact</Link>
+      <Link href="/admin/login" className="hover:text-gray-300">Admin</Link>
+    </div>
+  </div>
+</footer>
     </div>
   );
 }
