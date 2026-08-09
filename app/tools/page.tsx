@@ -1,148 +1,134 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 const tools = [
-  {
-    title: "Interest Calculator",
-    desc: "Simple & Compound interest",
-    icon: "💰",
-    href: "/tools/interest",
-    color: "from-green-400 to-emerald-600",
-  },
-  {
-    title: "Age Calculator",
-    desc: "Age from date of birth",
-    icon: "🎂",
-    href: "/tools/age",
-    color: "from-pink-400 to-rose-600",
-  },
-  {
-    title: "Date Duration",
-    desc: "Days, months, years between dates",
-    icon: "📅",
-    href: "/tools/date-duration",
-    color: "from-blue-400 to-indigo-600",
-  },
-  {
-    title: "Land Converter",
-    desc: "Cents, Guntas, Acres, Hectares",
-    icon: "🌾",
-    href: "/tools/land",
-    color: "from-lime-400 to-green-700",
-  },
-  {
-    title: "Length Converter",
-    desc: "Meters, cm, mm, yards, miles",
-    icon: "📏",
-    href: "/tools/length",
-    color: "from-cyan-400 to-teal-600",
-  },
-  {
-    title: "Note Counter",
-    desc: "₹10, ₹20, ₹50, ₹100, ₹200, ₹500",
-    icon: "💵",
-    href: "/tools/notes",
-    color: "from-amber-400 to-orange-600",
-  },
-  {
-    title: "Basic Calculator",
-    desc: "Add, subtract, multiply, divide",
-    icon: "🔢",
-    href: "/tools/calculator",
-    color: "from-violet-400 to-purple-600",
-  },
-  {
-    title: "Scientific Calculator",
-    desc: "Sin, Cos, Tan, log, powers",
-    icon: "📐",
-    href: "/tools/scientific",
-    color: "from-sky-400 to-blue-700",
-  },
-  {
-  title: "BMI Calculator",
-  desc: "Body Mass Index",
-  icon: "⚖️",
-  href: "/tools/bmi",
-  color: "from-fuchsia-400 to-purple-700",
-},
+  { href: "/tools/interest", icon: "💰", title: "Interest Calculator", desc: "Simple & compound interest", color: "orange" },
+  { href: "/tools/age", icon: "🎂", title: "Age Calculator", desc: "Exact age in years, months, days", color: "violet" },
+  { href: "/tools/date", icon: "📅", title: "Date Duration", desc: "Days between two dates", color: "sky" },
+  { href: "/tools/land", icon: "🌾", title: "Land Converter", desc: "Cents, guntas, acres, hectares", color: "green" },
+  { href: "/tools/length", icon: "📏", title: "Length Converter", desc: "cm, m, km, feet, yards", color: "blue" },
+  { href: "/tools/notes", icon: "💵", title: "Note Counter", desc: "₹10, 20, 50, 100, 200, 500", color: "emerald" },
+  { href: "/tools/bmi", icon: "⚖️", title: "BMI Calculator", desc: "Body mass index", color: "rose" },
+  { href: "/tools/calculator", icon: "🔢", title: "Basic Calculator", desc: "Quick everyday math", color: "slate" },
+  { href: "/tools/scientific", icon: "🧪", title: "Scientific Calculator", desc: "Sin, cos, log, power", color: "indigo" },
 ];
 
+const colorMap: Record<string, string> = {
+  orange: "bg-orange-100 text-orange-600",
+  violet: "bg-violet-100 text-violet-600",
+  sky: "bg-sky-100 text-sky-600",
+  green: "bg-green-100 text-green-600",
+  blue: "bg-blue-100 text-blue-600",
+  emerald: "bg-emerald-100 text-emerald-600",
+  rose: "bg-rose-100 text-rose-600",
+  slate: "bg-slate-100 text-slate-600",
+  indigo: "bg-indigo-100 text-indigo-600",
+};
+
 export default function ToolsPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-orange-600 text-white text-center text-sm py-2">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-orange-600 text-white text-center text-xs sm:text-sm py-2">
         A unit of A.S.V Enterprises | Mutharam Digital Services
       </div>
 
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      <header className="bg-white/95 backdrop-blur sticky top-0 z-50 border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
               N
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Nexlify Nucleus</h1>
-              <p className="text-xs text-orange-600 font-medium">Digital Services Portal</p>
+              <p className="font-bold text-slate-900 leading-tight">Nexlify Nucleus</p>
+              <p className="text-[11px] text-orange-600 font-medium">Digital Tools</p>
             </div>
           </Link>
-          <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-gray-700">
+
+          <nav className="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-700">
             <Link href="/" className="hover:text-orange-500">Home</Link>
-            <Link href="/tools" className="text-orange-500">Tools</Link>
+            <Link href="/tools" className="text-orange-600">Tools</Link>
+            <Link href="/agriculture" className="hover:text-orange-500">Agriculture</Link>
             <Link href="/business" className="hover:text-orange-500">Business</Link>
             <Link href="/news" className="hover:text-orange-500">News</Link>
             <Link href="/contact" className="hover:text-orange-500">Contact</Link>
           </nav>
-          <a href="https://wa.me/919502336495" target="_blank" className="bg-green-500 text-white text-sm px-4 py-2 rounded-lg">
-            WhatsApp
-          </a>
+
+          <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden p-2 rounded-xl hover:bg-slate-100">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {menuOpen && (
+          <div className="lg:hidden border-t px-4 py-3 space-y-1">
+            <Link href="/" onClick={() => setMenuOpen(false)} className="block py-2 font-medium">Home</Link>
+            <Link href="/tools" onClick={() => setMenuOpen(false)} className="block py-2 font-medium text-orange-600">Tools</Link>
+            <Link href="/agriculture" onClick={() => setMenuOpen(false)} className="block py-2 font-medium">Agriculture</Link>
+            <Link href="/business" onClick={() => setMenuOpen(false)} className="block py-2 font-medium">Business</Link>
+            <Link href="/news" onClick={() => setMenuOpen(false)} className="block py-2 font-medium">News</Link>
+            <Link href="/contact" onClick={() => setMenuOpen(false)} className="block py-2 font-medium">Contact</Link>
+          </div>
+        )}
       </header>
 
-      <section className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">🛠️ Digital Tools</h2>
-          <p className="text-gray-500">Calculators, converters & useful tools — free for everyone</p>
+      <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900">🛠️ Digital Tools</h1>
+          <p className="text-slate-500 mt-2">Free calculators & converters — mobile friendly</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {tools.map((tool) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {tools.map((t) => (
             <Link
-              key={tool.href}
-              href={tool.href}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm border hover:shadow-lg transition group"
+              key={t.href}
+              href={t.href}
+              className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col transition duration-300 hover:-translate-y-1.5 hover:shadow-xl group"
             >
-              <div className={`h-24 bg-gradient-to-br ${tool.color} flex items-center justify-center text-4xl`}>
-                {tool.icon}
+              <div className={`w-14 h-14 rounded-2xl ${colorMap[t.color]} flex items-center justify-center text-2xl mb-4`}>
+                {t.icon}
               </div>
-              <div className="p-4">
-                <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition">
-                  {tool.title}
-                </h3>
-                <p className="text-gray-500 text-sm mt-1">{tool.desc}</p>
-                <p className="text-orange-500 text-xs font-semibold mt-3">Open tool →</p>
-              </div>
+              <h2 className="text-lg font-bold text-slate-900 group-hover:text-orange-600 transition">
+                {t.title}
+              </h2>
+              <p className="text-sm text-slate-500 mt-1 flex-1">{t.desc}</p>
+              <span className="text-orange-600 font-semibold text-sm mt-4">Open →</span>
             </Link>
           ))}
         </div>
-      </section>
 
-      <footer className="bg-gray-900 text-white py-8">
-  <div className="max-w-6xl mx-auto px-4 text-center">
-    <p className="font-medium">Nexlify Nucleus</p>
-    <p className="text-gray-400 text-sm mt-1">A unit of A.S.V Enterprises • Mutharam</p>
-    <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm text-gray-400">
-      <Link href="/" className="hover:text-white">Home</Link>
-      <Link href="/tools" className="hover:text-white">Tools</Link>
-      <Link href="/agriculture" className="hover:text-white">Agriculture</Link>
-      <Link href="/business" className="hover:text-white">Business</Link>
-      <Link href="/gallery" className="hover:text-white">Gallery</Link>
-      <Link href="/news" className="hover:text-white">News</Link>
-      <Link href="/contact" className="hover:text-white">Contact</Link>
-      <Link href="/admin/login" className="hover:text-gray-300">Admin</Link>
-    </div>
-  </div>
-</footer>
+        <div className="mt-12 text-center">
+          <Link href="/" className="text-slate-500 hover:text-orange-600 text-sm font-medium">
+            ← Back to Home
+          </Link>
+        </div>
+      </div>
+
+      <footer className="bg-slate-950 text-slate-400 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <p className="text-white font-semibold">Nexlify Nucleus</p>
+          <p className="text-sm mt-1">A unit of A.S.V Enterprises · Mutharam</p>
+          <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
+            <Link href="/" className="hover:text-white">Home</Link>
+            <Link href="/news" className="hover:text-white">News</Link>
+            <Link href="/contact" className="hover:text-white">Contact</Link>
+            <Link href="/admin/login" className="hover:text-slate-300">Admin</Link>
+          </div>
+        </div>
+      </footer>
+
+      <div className="fixed bottom-5 right-4 z-50 flex flex-col gap-3">
+        <a href="https://wa.me/919502336495" target="_blank" className="w-14 h-14 rounded-full bg-green-500 text-white shadow-lg flex items-center justify-center text-2xl hover:scale-110 transition">💬</a>
+        <a href="tel:9502336495" className="w-14 h-14 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center text-2xl hover:scale-110 transition">📞</a>
+      </div>
     </div>
   );
 }

@@ -1,30 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-
-type NewsItem = {
-  id: number;
-  title: string;
-  content: string;
-  sub_headline_1?: string;
-  sub_headline_2?: string;
-  sub_headline_3?: string;
-  sub_headline_4?: string;
-  sub_headline_5?: string;
-  sub_headline_6?: string;
-  image_url?: string;
-  video_url?: string;
-  location?: string;
-  category?: string;
-  created_at: string;
-};
+import { supabase } from "@/lib/supabase";
 
 export default function AdminPage() {
-  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+
+  // Flash
+  const [flashMsg, setFlashMsg] = useState("");
+  const [flashLink, setFlashLink] = useState("https://wa.me/919502336495");
+  const [flashSaving, setFlashSaving] = useState(false);
+  const [flashStatus, setFlashStatus] = useState("");
+  const [currentFlash, setCurrentFlash] = useState("");
+
+  // News
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sub1, setSub1] = useState("");
@@ -35,377 +28,354 @@ export default function AdminPage() {
   const [sub6, setSub6] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("Mutharam");
   const [category, setCategory] = useState("General");
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [newsSaving, setNewsSaving] = useState(false);
+  const [newsStatus, setNewsStatus] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
+  const [recentNews, setRecentNews] = useState<any[]>([]);
+
+  // Gallery
+  const [gTitle, setGTitle] = useState("");
+  const [gDesc, setGDesc] = useState("");
+  const [gCategory, setGCategory] = useState("General");
+  const [gImageUrl, setGImageUrl] = useState("");
+  const [gUploading, setGUploading] = useState(false);
+  const [gSaving, setGSaving] = useState(false);
+  const [gStatus, setGStatus] = useState("");
+
+  // Contacts
+  const [contacts, setContacts] = useState<any[]>([]);
 
   useEffect(() => {
-    checkUser();
-    fetchNews();
-  }, []);
-
-  // Copy-Paste image support
-  useEffect(() => {
-    const handlePaste = async (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (const item of items) {
-        if (item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-          if (file) {
-            await uploadFile(file, "image");
-          }
-        }
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/admin/login");
+        return;
       }
-    };
+      setEmail(user.email || "");
+      setLoading(false);
 
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-  }, []);
+      const { data: flash } = await supabase
+        .from("flash_messages")
+        .select("message")
+        .eq("active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (flash) setCurrentFlash(flash.message);
 
-  async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/admin/login");
-    } else {
-      setUser(user);
+      const { data: news } = await supabase
+        .from("news")
+        .select("id, title, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setRecentNews(news || []);
+
+      const { data: msgs } = await supabase
+        .from("contacts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      setContacts(msgs || []);
     }
-    setLoading(false);
+    init();
+  }, [router]);
+
+  async function saveFlash() {
+    if (!flashMsg.trim()) {
+      setFlashStatus("Message type చేయండి");
+      return;
+    }
+    setFlashSaving(true);
+    setFlashStatus("");
+    await supabase.from("flash_messages").update({ active: false }).eq("active", true);
+    const { error } = await supabase.from("flash_messages").insert({
+      message: flashMsg.trim(),
+      link: flashLink.trim() || null,
+      active: true,
+    });
+    setFlashSaving(false);
+    if (error) setFlashStatus("Error: " + error.message);
+    else {
+      setFlashStatus("✅ Flash saved");
+      setCurrentFlash(flashMsg.trim());
+      setFlashMsg("");
+    }
   }
 
-  async function fetchNews() {
-    const { data } = await supabase
-      .from("news")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setNews(data || []);
+  async function clearFlash() {
+    await supabase.from("flash_messages").update({ active: false }).eq("active", true);
+    setCurrentFlash("");
+    setFlashStatus("Flash cleared");
   }
 
-  async function uploadFile(file: File, type: "image" | "video") {
+  async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
-    setMessage("");
-
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from("news-media")
-      .upload(fileName, file);
-
+    setNewsStatus("");
+    const ext = file.name.split(".").pop();
+    const fileName = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("news-media").upload(fileName, file);
     if (error) {
-      setMessage("Upload error: " + error.message);
+      setNewsStatus("Upload error: " + error.message);
       setUploading(false);
       return;
     }
-
     const { data } = supabase.storage.from("news-media").getPublicUrl(fileName);
-    const publicUrl = data.publicUrl;
-
-    if (type === "image") {
-      setImageUrl(publicUrl);
-    } else {
-      setVideoUrl(publicUrl);
-    }
-
-    setMessage(`${type === "image" ? "Image" : "Video"} uploaded successfully!`);
+    setImageUrl(data.publicUrl);
     setUploading(false);
+    setNewsStatus("✅ Image uploaded");
   }
 
-  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) await uploadFile(file, "image");
-  }
-
-  async function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) await uploadFile(file, "video");
-  }
-
-  async function handleAddNews(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setMessage("");
-
-    const { error } = await supabase.from("news").insert([{
-      title,
-      content,
-      sub_headline_1: sub1 || null,
-      sub_headline_2: sub2 || null,
-      sub_headline_3: sub3 || null,
-      sub_headline_4: sub4 || null,
-      sub_headline_5: sub5 || null,
-      sub_headline_6: sub6 || null,
-      image_url: imageUrl || null,
-      video_url: videoUrl || null,
-      location: location || null,
-      category: category || "General",
-    }]);
-
-    setSubmitting(false);
-
-    if (error) {
-      setMessage("Error: " + error.message);
-    } else {
-      setMessage("News published successfully!");
+  async function saveNews() {
+    if (!title.trim() || !content.trim()) {
+      setNewsStatus("Title & content required");
+      return;
+    }
+    setNewsSaving(true);
+    setNewsStatus("");
+    const { error } = await supabase.from("news").insert({
+      title: title.trim(),
+      content: content.trim(),
+      sub_headline_1: sub1.trim() || null,
+      sub_headline_2: sub2.trim() || null,
+      sub_headline_3: sub3.trim() || null,
+      sub_headline_4: sub4.trim() || null,
+      sub_headline_5: sub5.trim() || null,
+      sub_headline_6: sub6.trim() || null,
+      image_url: imageUrl.trim() || null,
+      video_url: videoUrl.trim() || null,
+      location: location.trim() || "Mutharam",
+      category: category.trim() || "General",
+    });
+    setNewsSaving(false);
+    if (error) setNewsStatus("Error: " + error.message);
+    else {
+      setNewsStatus("✅ News published!");
       setTitle("");
       setContent("");
-      setSub1(""); setSub2(""); setSub3("");
-      setSub4(""); setSub5(""); setSub6("");
+      setSub1("");
+      setSub2("");
+      setSub3("");
+      setSub4("");
+      setSub5("");
+      setSub6("");
       setImageUrl("");
       setVideoUrl("");
-      setLocation("");
-      setCategory("General");
-      fetchNews();
+      const { data } = await supabase
+        .from("news")
+        .select("id, title, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setRecentNews(data || []);
     }
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/admin/login");
+  async function uploadGalleryImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setGUploading(true);
+    setGStatus("");
+    const ext = file.name.split(".").pop();
+    const fileName = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("gallery").upload(fileName, file);
+    if (error) {
+      setGStatus("Upload error: " + error.message);
+      setGUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("gallery").getPublicUrl(fileName);
+    setGImageUrl(data.publicUrl);
+    setGUploading(false);
+    setGStatus("✅ Image uploaded");
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this news?")) return;
-    await supabase.from("news").delete().eq("id", id);
-    fetchNews();
+  async function saveGallery() {
+    if (!gTitle.trim() || !gImageUrl.trim()) {
+      setGStatus("Title + image required");
+      return;
+    }
+    setGSaving(true);
+    setGStatus("");
+    const { error } = await supabase.from("gallery").insert({
+      title: gTitle.trim(),
+      description: gDesc.trim() || null,
+      image_url: gImageUrl.trim(),
+      category: gCategory.trim() || "General",
+    });
+    setGSaving(false);
+    if (error) setGStatus("Error: " + error.message);
+    else {
+      setGStatus("✅ Photo saved! /gallery refresh చేయండి");
+      setGTitle("");
+      setGDesc("");
+      setGCategory("General");
+      setGImageUrl("");
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">
+        Loading admin...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-            <p className="text-sm text-gray-500">Nexlify Nucleus • Advanced News</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-sm text-gray-600 hover:text-orange-500">View Website</Link>
-            <button onClick={handleLogout} className="text-sm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
-              Logout
-            </button>
-          </div>
+    <div className="min-h-screen bg-slate-100">
+      <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div>
+          <p className="font-bold">Admin Panel</p>
+          <p className="text-xs text-slate-400">{email}</p>
         </div>
-      </header>
+        <div className="flex gap-4 text-sm">
+          <Link href="/" className="text-slate-300 hover:text-white">View site</Link>
+          <Link href="/gallery" className="text-slate-300 hover:text-white">Gallery</Link>
+          <button onClick={logout} className="text-red-300 hover:text-red-200">Logout</button>
+        </div>
+      </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="bg-white rounded-2xl shadow-sm border p-6 mb-10">
-          <h2 className="text-lg font-bold mb-6">Add Advanced News</h2>
-          <form onSubmit={handleAddNews} className="space-y-5">
-
-            {/* Category & Location */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="General">General</option>
-                  <option value="Agriculture">Agriculture</option>
-                  <option value="Panchayat">Panchayat</option>
-                  <option value="Education">Education</option>
-                  <option value="Business">Business</option>
-                  <option value="CSC">CSC Services</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location / Town</label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="ముత్తారం"
-                />
-              </div>
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        {/* FLASH */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-1">⚡ Flash Message</h2>
+          <p className="text-sm text-slate-500 mb-4">Home LIVE bar</p>
+          {currentFlash ? (
+            <div className="mb-4 p-3 bg-slate-900 text-white rounded-xl text-sm">
+              <span className="bg-red-500 text-[10px] font-black px-1.5 py-0.5 rounded mr-2">LIVE</span>
+              {currentFlash}
+              <button onClick={clearFlash} className="block mt-2 text-red-300 text-xs hover:underline">Clear</button>
             </div>
+          ) : (
+            <p className="text-sm text-slate-400 mb-4">No active flash</p>
+          )}
+          <div className="space-y-3">
+            <input value={flashMsg} onChange={(e) => setFlashMsg(e.target.value)} placeholder="Message" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={flashLink} onChange={(e) => setFlashLink(e.target.value)} placeholder="Link optional" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <button onClick={saveFlash} disabled={flashSaving} className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">
+              {flashSaving ? "Saving..." : "Save Flash"}
+            </button>
+            {flashStatus && <p className="text-sm text-green-600 text-center">{flashStatus}</p>}
+          </div>
+        </section>
 
-            {/* Headline */}
+        {/* GALLERY */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-1">📷 Gallery upload</h2>
+          <p className="text-sm text-slate-500 mb-4">Photo → /gallery page</p>
+          <div className="space-y-3">
+            <input
+              value={gTitle}
+              onChange={(e) => setGTitle(e.target.value)}
+              placeholder="Title * (e.g. బోనాలు 2026)"
+              className="w-full border rounded-xl px-4 py-3 text-sm font-medium"
+            />
+            <textarea
+              value={gDesc}
+              onChange={(e) => setGDesc(e.target.value)}
+              placeholder="Description (optional)"
+              rows={3}
+              className="w-full border rounded-xl px-4 py-3 text-sm resize-y"
+            />
+            <input
+              value={gCategory}
+              onChange={(e) => setGCategory(e.target.value)}
+              placeholder="Category (Festival / Agriculture / Panchayat)"
+              className="w-full border rounded-xl px-4 py-3 text-sm"
+            />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Headline *</label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Main headline"
-              />
-            </div>
-
-            {/* Sub Headlines */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Sub Headlines (optional)</label>
-              {[sub1, sub2, sub3, sub4, sub5, sub6].map((val, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  value={val}
-                  onChange={(e) => {
-                    const setters = [setSub1, setSub2, setSub3, setSub4, setSub5, setSub6];
-                    setters[i](e.target.value);
-                  }}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder={`Sub headline ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Content */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Content *</label>
-              <textarea
-                required
-                rows={5}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Full news content..."
-              />
-            </div>
-
-            {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image (Upload or Ctrl+V Paste)
-              </label>
-              <div className="flex flex-wrap gap-3 items-center">
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={uploading}
-                  className="bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  {uploading ? "Uploading..." : "📷 Choose Image"}
-                </button>
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-                <span className="text-xs text-gray-400">or paste image with Ctrl+V</span>
-              </div>
-              {imageUrl && (
-                <div className="mt-3">
-                  <img src={imageUrl} alt="Preview" className="h-32 rounded-lg border object-cover" />
-                  <button type="button" onClick={() => setImageUrl("")} className="text-xs text-red-500 mt-1">
-                    Remove
-                  </button>
-                </div>
+              <label className="text-sm font-medium text-slate-700">Photo</label>
+              <input type="file" accept="image/*" onChange={uploadGalleryImage} className="w-full border rounded-xl px-4 py-3 mt-1 text-sm" />
+              {gUploading && <p className="text-xs text-orange-600 mt-1">Uploading...</p>}
+              {gImageUrl && (
+                <img src={gImageUrl} alt="preview" className="h-36 rounded-xl object-cover border mt-2" />
               )}
             </div>
-
-            {/* Video Upload */}
-            {/* Video Section */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Video (Upload లేదా YouTube Link)
-  </label>
-  
-  <div className="flex flex-wrap gap-3 items-center mb-3">
-    <button
-      type="button"
-      onClick={() => videoInputRef.current?.click()}
-      disabled={uploading}
-      className="bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium"
-    >
-      {uploading ? "Uploading..." : "🎬 Upload Video File"}
-    </button>
-    <input
-      ref={videoInputRef}
-      type="file"
-      accept="video/*"
-      onChange={handleVideoSelect}
-      className="hidden"
-    />
-  </div>
-
-  <div>
-    <input
-      type="url"
-      value={videoUrl}
-      onChange={(e) => setVideoUrl(e.target.value)}
-      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-      placeholder="లేదా YouTube link పెట్టండి[](https://youtube.com/watch?v=...)"
-    />
-  </div>
-
-  {videoUrl && (
-    <div className="mt-2 flex items-center gap-3">
-      <p className="text-sm text-green-600">Video ready ✓</p>
-      <button type="button" onClick={() => setVideoUrl("")} className="text-xs text-red-500">
-        Remove
-      </button>
-    </div>
-  )}
-</div>
-
-            {message && (
-              <p className={`text-sm ${message.includes("Error") || message.includes("error") ? "text-red-500" : "text-green-600"}`}>
-                {message}
-              </p>
-            )}
-
             <button
-              type="submit"
-              disabled={submitting || uploading}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-lg transition disabled:opacity-50"
+              onClick={saveGallery}
+              disabled={gSaving || gUploading}
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50"
             >
-              {submitting ? "Publishing..." : "Publish News"}
+              {gSaving ? "Saving..." : "Save to Gallery"}
             </button>
-          </form>
-        </div>
+            {gStatus && <p className="text-sm text-green-600 text-center">{gStatus}</p>}
+          </div>
+        </section>
 
-        {/* Existing News */}
-        <div className="bg-white rounded-2xl shadow-sm border p-6">
-          <h2 className="text-lg font-bold mb-4">Published News ({news.length})</h2>
-          {news.length === 0 ? (
-            <p className="text-gray-500">No news yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {news.map((item) => (
-                <div key={item.id} className="border rounded-xl p-4 flex justify-between items-start gap-4">
-                  <div className="flex gap-4">
-                    {item.image_url && (
-                      <img src={item.image_url} alt="" className="w-20 h-20 rounded-lg object-cover" />
-                    )}
-                    <div>
-                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                        {item.category || "General"}
-                      </span>
-                      <h3 className="font-bold text-gray-900 mt-1">{item.title}</h3>
-                      {item.location && <p className="text-xs text-gray-400">{item.location}</p>}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-500 hover:text-red-700 text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              ))}
+        {/* NEWS */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-1">📰 Publish News</h2>
+          <p className="text-sm text-slate-500 mb-4">Headline + sub headlines + image</p>
+          <div className="space-y-3">
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Headline / Title *" className="w-full border rounded-xl px-4 py-3 text-sm font-medium" />
+            <input value={sub1} onChange={(e) => setSub1(e.target.value)} placeholder="Sub headline 1" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={sub2} onChange={(e) => setSub2(e.target.value)} placeholder="Sub headline 2" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={sub3} onChange={(e) => setSub3(e.target.value)} placeholder="Sub headline 3" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={sub4} onChange={(e) => setSub4(e.target.value)} placeholder="Sub headline 4" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={sub5} onChange={(e) => setSub5(e.target.value)} placeholder="Sub headline 5" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={sub6} onChange={(e) => setSub6(e.target.value)} placeholder="Sub headline 6" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Full content *" rows={5} className="w-full border rounded-xl px-4 py-3 text-sm resize-y" />
+            <div>
+              <label className="text-sm font-medium text-slate-700">News image</label>
+              <input type="file" accept="image/*" onChange={uploadImage} className="w-full border rounded-xl px-4 py-3 mt-1 text-sm" />
+              {uploading && <p className="text-xs text-orange-600 mt-1">Uploading...</p>}
+              {imageUrl && <img src={imageUrl} alt="" className="h-28 rounded-xl object-cover border mt-2" />}
             </div>
+            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Or image URL" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube link" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" className="w-full border rounded-xl px-4 py-3 text-sm" />
+            <button onClick={saveNews} disabled={newsSaving || uploading} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">
+              {newsSaving ? "Publishing..." : "Publish News"}
+            </button>
+            {newsStatus && <p className="text-sm text-green-600 text-center">{newsStatus}</p>}
+          </div>
+        </section>
+
+        {/* RECENT NEWS */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-3">Recent news</h2>
+          {recentNews.length === 0 ? (
+            <p className="text-sm text-slate-400">No news</p>
+          ) : (
+            <ul className="space-y-2">
+              {recentNews.map((n) => (
+                <li key={n.id} className="flex justify-between text-sm border-b pb-2">
+                  <Link href={`/news/${n.id}`} className="font-medium hover:text-orange-600 line-clamp-1">{n.title}</Link>
+                  <span className="text-xs text-slate-400 ml-2">{new Date(n.created_at).toLocaleDateString()}</span>
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
+        </section>
+
+        {/* CONTACTS */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-3">Contact messages</h2>
+          {contacts.length === 0 ? (
+            <p className="text-sm text-slate-400">No messages</p>
+          ) : (
+            <ul className="space-y-3">
+              {contacts.map((c) => (
+                <li key={c.id} className="text-sm border rounded-xl p-3 bg-slate-50">
+                  <p className="font-semibold">{c.name} · {c.phone}</p>
+                  <p className="text-slate-600 mt-1">{c.message}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );
