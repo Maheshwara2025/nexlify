@@ -255,41 +255,6 @@ export default function NewsDetailPage() {
         </aside>
       </div>
 
-{/* Fixed Bottom Ticker - always visible */}
-{related.length > 0 && (
-  <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 shadow-2xl">
-    <div className="flex items-center max-w-full">
-      {/* Ribbon Label */}
-      <div className="bg-yellow-400 text-black text-sm md:text-base font-black px-4 md:px-6 py-3 flex-shrink-0 uppercase tracking-wider shadow-inner">
-        🔴 LIVE
-      </div>
-
-      {/* Scrolling Headlines */}
-      <div className="overflow-hidden flex-1 py-3">
-        <div className="animate-marquee whitespace-nowrap flex gap-12">
-          {related.map((item) => (
-            <Link
-              key={item.id}
-              href={`/news/${item.id}`}
-              className="text-white text-sm md:text-lg font-bold hover:text-yellow-300 transition inline-block"
-            >
-              ★ {item.title}
-            </Link>
-          ))}
-          {related.map((item) => (
-            <Link
-              key={`dup-${item.id}`}
-              href={`/news/${item.id}`}
-              className="text-white text-sm md:text-lg font-bold hover:text-yellow-300 transition inline-block"
-            >
-              ★ {item.title}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-)}
       <footer className="bg-gray-900 text-white py-8 mt-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="font-medium">Nexlify Nucleus</p>

@@ -47,6 +47,14 @@ export default function AdminPage() {
   // Contacts
   const [contacts, setContacts] = useState<any[]>([]);
 
+  // Market prices
+  const [goldPrice, setGoldPrice] = useState("");
+  const [silverPrice, setSilverPrice] = useState("");
+  const [dieselPrice, setDieselPrice] = useState("");
+  const [pricesSaving, setPricesSaving] = useState(false);
+  const [pricesStatus, setPricesStatus] = useState("");
+  const [pricesUpdatedAt, setPricesUpdatedAt] = useState("");
+
   useEffect(() => {
     async function init() {
       const {
@@ -81,6 +89,18 @@ export default function AdminPage() {
         .order("created_at", { ascending: false })
         .limit(10);
       setContacts(msgs || []);
+
+      const { data: prices } = await supabase
+        .from("market_prices")
+        .select("gold_price, silver_price, diesel_price, updated_at")
+        .eq("id", 1)
+        .maybeSingle();
+      if (prices) {
+        setGoldPrice(prices.gold_price);
+        setSilverPrice(prices.silver_price);
+        setDieselPrice(prices.diesel_price);
+        setPricesUpdatedAt(prices.updated_at);
+      }
     }
     init();
   }, [router]);
@@ -221,6 +241,28 @@ export default function AdminPage() {
     }
   }
 
+  async function savePrices() {
+    if (!goldPrice.trim() || !silverPrice.trim() || !dieselPrice.trim()) {
+      setPricesStatus("All three prices required");
+      return;
+    }
+    setPricesSaving(true);
+    setPricesStatus("");
+    const { error } = await supabase.from("market_prices").upsert({
+      id: 1,
+      gold_price: goldPrice.trim(),
+      silver_price: silverPrice.trim(),
+      diesel_price: dieselPrice.trim(),
+      updated_at: new Date().toISOString(),
+    });
+    setPricesSaving(false);
+    if (error) setPricesStatus("Error: " + error.message);
+    else {
+      setPricesStatus("✅ Prices updated");
+      setPricesUpdatedAt(new Date().toISOString());
+    }
+  }
+
   async function logout() {
     await supabase.auth.signOut();
     router.replace("/admin/login");
@@ -255,6 +297,54 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        {/* MARKET PRICES */}
+        <section className="bg-white rounded-2xl border shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-1">💰 Market Prices</h2>
+          <p className="text-sm text-slate-500 mb-4">Gold / Silver / Diesel — top ticker bar</p>
+          {pricesUpdatedAt && (
+            <p className="text-xs text-slate-400 mb-3">
+              Last updated: {new Date(pricesUpdatedAt).toLocaleString()}
+            </p>
+          )}
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-slate-700">🥇 Gold (₹/10g)</label>
+              <input
+                value={goldPrice}
+                onChange={(e) => setGoldPrice(e.target.value)}
+                placeholder="72500"
+                className="w-full border rounded-xl px-4 py-3 mt-1 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">🥈 Silver (₹/kg)</label>
+              <input
+                value={silverPrice}
+                onChange={(e) => setSilverPrice(e.target.value)}
+                placeholder="85000"
+                className="w-full border rounded-xl px-4 py-3 mt-1 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">⛽ Diesel (₹/L)</label>
+              <input
+                value={dieselPrice}
+                onChange={(e) => setDieselPrice(e.target.value)}
+                placeholder="92.50"
+                className="w-full border rounded-xl px-4 py-3 mt-1 text-sm"
+              />
+            </div>
+            <button
+              onClick={savePrices}
+              disabled={pricesSaving}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50"
+            >
+              {pricesSaving ? "Saving..." : "Update Prices"}
+            </button>
+            {pricesStatus && <p className="text-sm text-green-600 text-center">{pricesStatus}</p>}
+          </div>
+        </section>
+
         {/* FLASH */}
         <section className="bg-white rounded-2xl border shadow-sm p-6">
           <h2 className="text-lg font-bold text-slate-900 mb-1">⚡ Flash Message</h2>
